@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARM Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --warn: #ffaa00;
+    --danger: #ff4444;
+    --text: #e0e0f0;
+    --muted: #555570;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .status-dot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  .dot.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-color, var(--accent)), transparent);
+    opacity: 0.5;
+  }
+
+  .card:hover { border-color: #2e2e4e; }
+
+  .card-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .card-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 8px;
+    transition: color 0.5s;
+  }
+
+  .card-sub {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .bar-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+
+  .bar {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 1s ease, background 0.5s;
+    width: 0%;
+  }
+
+  /* Color classes */
+  .ok { color: var(--accent); }
+  .warn { color: var(--warn); }
+  .danger { color: var(--danger); }
+  .blue { color: var(--accent2); }
+
+  .bar.ok { background: var(--accent); }
+  .bar.warn { background: var(--warn); }
+  .bar.danger { background: var(--danger); }
+  .bar.blue { background: var(--accent2); }
+
+  /* Uptime card */
+  .uptime-card {
+    grid-column: span 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .uptime-grid {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .uptime-item { }
+  .uptime-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .uptime-lbl {
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-text {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Loading skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, var(--border) 25%, #252535 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    height: 2.2rem;
+    width: 80px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .countdown {
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  .countdown span { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .card-value { font-size: 1.8rem; }
+    .uptime-card { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">ARM<span>·</span>Monitor</div>
+    <div class="status-row">
+      <div class="status-dot">
+        <div class="dot" id="statusDot"></div>
+        <span id="statusText">загрузка...</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- CPU -->
+    <div class="card" style="--accent-color: var(--accent)">
+      <div class="card-label">Процессор</div>
+      <div class="card-value ok" id="cpuVal"><div class="skeleton"></div></div>
+      <div class="card-sub" id="cpuSub">нагрузка</div>
+      <div class="bar-wrap"><div class="bar ok" id="cpuBar"></div></div>
+    </div>
+
+    <!-- RAM -->
+    <div class="card" style="--accent-color: var(--accent2)">
+      <div class="card-label">Оперативная память</div>
+      <div class="card-value blue" id="ramVal"><div class="skeleton"></div></div>
+      <div class="card-sub" id="ramSub">—</div>
+      <div class="bar-wrap"><div class="bar blue" id="ramBar"></div></div>
+    </div>
+
+    <!-- Temp -->
+    <div class="card" style="--accent-color: var(--warn)">
+      <div class="card-label">Температура</div>
+      <div class="card-value ok" id="tempVal"><div class="skeleton"></div></div>
+      <div class="card-sub">CPU</div>
+      <div class="bar-wrap"><div class="bar ok" id="tempBar"></div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Disk -->
+    <div class="card" style="--accent-color: var(--warn)">
+      <div class="card-label">Диск</div>
+      <div class="card-value warn" id="diskVal"><div class="skeleton"></div></div>
+      <div class="card-sub" id="diskSub">—</div>
+      <div class="bar-wrap"><div class="bar warn" id="diskBar"></div></div>
+    </div>
+
+    <!-- Uptime -->
+    <div class="card uptime-card">
+      <div>
+        <div class="card-label">Аптайм</div>
+        <div class="uptime-grid" id="uptimeGrid">
+          <div class="uptime-item">
+            <div class="uptime-num" id="uptDays">—</div>
+            <div class="uptime-lbl">дней</div>
+          </div>
+          <div class="uptime-item">
+            <div class="uptime-num" id="uptHours">—</div>
+            <div class="uptime-lbl">часов</div>
+          </div>
+          <div class="uptime-item">
+            <div class="uptime-num" id="uptMins">—</div>
+            <div class="uptime-lbl">минут</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>
+      <div class="footer-text">Последнее обновление: <span id="lastUpdate">—</span></div>
+      <div class="footer-text" style="margin-top:4px">Следующее обновление: <span class="countdown"><span id="countdown">120</span> сек</span></div>
+    </div>
+    <button class="refresh-btn" onclick="fetchStats()">↻ обновить</button>
+  </div>
+</div>
+
+<script>
+  const REPO = 'AlwaysWaffle/arm-monitor';
+  const FILE = 'stats.json';
+  const URL = `https://raw.githubusercontent.com/${REPO}/main/${FILE}?t=${Date.now()}`;
+  const INTERVAL = 120;
+
+  let countdown = INTERVAL;
+  let timer;
+
+  function colorClass(val, warn, danger) {
+    if (val >= danger) return 'danger';
+    if (val >= warn) return 'warn';
+    return 'ok';
+  }
+
+  function setMetric(valId, barId, value, unit, warn, danger) {
+    const el = document.getElementById(valId);
+    const bar = document.getElementById(barId);
+    const cls = colorClass(value, warn, danger);
+    el.textContent = value + unit;
+    el.className = 'card-value ' + cls;
+    bar.style.width = Math.min(value, 100) + '%';
+    bar.className = 'bar ' + cls;
+  }
+
+  function parseUptime(seconds) {
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return { d, h, m };
+  }
+
+  async function fetchStats() {
+    try {
+      const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE}?t=${Date.now()}`);
+      if (!res.ok) throw new Error('no data');
+      const data = await res.json();
+
+      // CPU
+      setMetric('cpuVal', 'cpuBar', data.cpu, '%', 70, 90);
+
+      // RAM
+      const ramPct = Math.round((data.ram_used / data.ram_total) * 100);
+      setMetric('ramVal', 'ramBar', ramPct, '%', 70, 90);
+      document.getElementById('ramSub').textContent =
+        Math.round(data.ram_used) + ' / ' + Math.round(data.ram_total) + ' МБ';
+
+      // Temp
+      const t = data.temp;
+      setMetric('tempVal', 'tempBar', t, '°C', 65, 80);
+      const tempBar = document.getElementById('tempBar');
+      const tempEl = document.getElementById('tempVal');
+      const tempCls = colorClass(t, 65, 80);
+      tempEl.className = 'card-value ' + tempCls;
+      tempBar.style.width = Math.min((t / 100) * 100, 100) + '%';
+
+      // Disk
+      setMetric('diskVal', 'diskBar', data.disk_pct, '%', 70, 90);
+      document.getElementById('diskSub').textContent =
+        'свободно: ' + data.disk_free;
+
+      // Uptime
+      const up = parseUptime(data.uptime_sec);
+      document.getElementById('uptDays').textContent = up.d;
+      document.getElementById('uptHours').textContent = up.h;
+      document.getElementById('uptMins').textContent = up.m;
+
+      // Status
+      document.getElementById('statusDot').className = 'dot';
+      document.getElementById('statusText').textContent = 'онлайн';
+
+      // Last update
+      const d = new Date(data.timestamp * 1000);
+      document.getElementById('lastUpdate').textContent =
+        d.toLocaleDateString('ru') + ' ' + d.toLocaleTimeString('ru');
+
+    } catch(e) {
+      document.getElementById('statusDot').className = 'dot offline';
+      document.getElementById('statusText').textContent = 'нет данных';
+    }
+
+    // Reset countdown
+    countdown = INTERVAL;
+  }
+
+  function startCountdown() {
+    clearInterval(timer);
+    timer = setInterval(() => {
+      countdown--;
+      document.getElementById('countdown').textContent = countdown;
+      if (countdown <= 0) {
+        fetchStats();
+      }
+    }, 1000);
+  }
+
+  fetchStats();
+  startCountdown();
+</script>
+</body>
+</html>
