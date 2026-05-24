@@ -1,462 +1,381 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ARM Monitor</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --border: #1e1e2e;
-    --accent: #00ff88;
-    --accent2: #0088ff;
-    --warn: #ffaa00;
-    --danger: #ff4444;
-    --text: #e0e0f0;
-    --muted: #555570;
-  }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Server Monitor</title>
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+        :root {
+            --bg: #0b1020;
+            --card: rgba(20, 28, 48, 0.75);
+            --border: rgba(255,255,255,0.08);
+            --text: #f4f7ff;
+            --muted: #97a2c7;
 
-  /* Grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+            --green: #4ade80;
+            --blue: #60a5fa;
+            --orange: #f59e0b;
+            --red: #ef4444;
+        }
 
-  .container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    position: relative;
-    z-index: 1;
-  }
+        body {
+            min-height: 100vh;
+            font-family: Inter, Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, #1b2b57 0%, transparent 35%),
+                radial-gradient(circle at bottom right, #12213f 0%, transparent 30%),
+                var(--bg);
 
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 40px;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
+            color: var(--text);
+            padding: 24px;
+        }
 
-  .logo {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
 
-  .logo span { color: var(--accent); }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
 
-  .status-row {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 800;
+        }
 
-  .status-dot {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
+        .logo span {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
 
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-    animation: pulse 2s infinite;
-  }
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: rgba(74, 222, 128, 0.08);
+            border: 1px solid rgba(74, 222, 128, 0.18);
+            color: var(--green);
+            font-weight: 600;
+        }
 
-  .dot.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); animation: none; }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 12px var(--green);
+        }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
-  }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 22px;
+            backdrop-filter: blur(14px);
+            box-shadow:
+                0 8px 30px rgba(0,0,0,0.35),
+                inset 0 1px 0 rgba(255,255,255,0.03);
+        }
 
-  .grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
-  }
+        .label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.3s;
-  }
+        .value {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
 
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-color, var(--accent)), transparent);
-    opacity: 0.5;
-  }
+        .sub {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
 
-  .card:hover { border-color: #2e2e4e; }
+        .bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 999px;
+            overflow: hidden;
+        }
 
-  .card-label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
+        .fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
 
-  .card-value {
-    font-family: 'Syne', sans-serif;
-    font-size: 2.2rem;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 8px;
-    transition: color 0.5s;
-  }
+        .green {
+            color: var(--green);
+        }
 
-  .card-sub {
-    font-size: 0.7rem;
-    color: var(--muted);
-    margin-top: 4px;
-  }
+        .green-bg {
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+        }
 
-  .bar-wrap {
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    margin-top: 12px;
-    overflow: hidden;
-  }
+        .blue {
+            color: var(--blue);
+        }
 
-  .bar {
-    height: 100%;
-    border-radius: 2px;
-    background: var(--accent);
-    transition: width 1s ease, background 0.5s;
-    width: 0%;
-  }
+        .blue-bg {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        }
 
-  /* Color classes */
-  .ok { color: var(--accent); }
-  .warn { color: var(--warn); }
-  .danger { color: var(--danger); }
-  .blue { color: var(--accent2); }
+        .orange {
+            color: var(--orange);
+        }
 
-  .bar.ok { background: var(--accent); }
-  .bar.warn { background: var(--warn); }
-  .bar.danger { background: var(--danger); }
-  .bar.blue { background: var(--accent2); }
+        .orange-bg {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
 
-  /* Uptime card */
-  .uptime-card {
-    grid-column: span 2;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
+        .red {
+            color: var(--red);
+        }
 
-  .uptime-grid {
-    display: flex;
-    gap: 32px;
-    flex-wrap: wrap;
-  }
+        .red-bg {
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+        }
 
-  .uptime-item { }
-  .uptime-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--accent);
-  }
-  .uptime-lbl {
-    font-size: 0.6rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
+        .bottom {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
 
-  /* Footer */
-  .footer {
-    margin-top: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-  }
+        .mini-title {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
 
-  .footer-text {
-    font-size: 0.65rem;
-    color: var(--muted);
-    letter-spacing: 0.05em;
-  }
+        .mini-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
 
-  .refresh-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
 
-  .refresh-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
+        @media (max-width: 600px) {
+            body {
+                padding: 14px;
+            }
 
-  /* Loading skeleton */
-  .skeleton {
-    background: linear-gradient(90deg, var(--border) 25%, #252535 50%, var(--border) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 4px;
-    height: 2.2rem;
-    width: 80px;
-  }
+            .value {
+                font-size: 2.4rem;
+            }
 
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  .countdown {
-    font-size: 0.65rem;
-    color: var(--muted);
-  }
-
-  .countdown span { color: var(--accent); }
-
-  @media (max-width: 600px) {
-    .grid { grid-template-columns: 1fr 1fr; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .card-value { font-size: 1.8rem; }
-    .uptime-card { grid-column: span 2; }
-  }
-</style>
+            .logo h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
 </head>
+
 <body>
+
 <div class="container">
-  <header>
-    <div class="logo">ARM<span>·</span>Monitor</div>
-    <div class="status-row">
-      <div class="status-dot">
-        <div class="dot" id="statusDot"></div>
-        <span id="statusText">загрузка...</span>
-      </div>
-    </div>
-  </header>
 
-  <div class="grid">
-    <!-- CPU -->
-    <div class="card" style="--accent-color: var(--accent)">
-      <div class="card-label">Процессор</div>
-      <div class="card-value ok" id="cpuVal"><div class="skeleton"></div></div>
-      <div class="card-sub" id="cpuSub">нагрузка</div>
-      <div class="bar-wrap"><div class="bar ok" id="cpuBar"></div></div>
-    </div>
-
-    <!-- RAM -->
-    <div class="card" style="--accent-color: var(--accent2)">
-      <div class="card-label">Оперативная память</div>
-      <div class="card-value blue" id="ramVal"><div class="skeleton"></div></div>
-      <div class="card-sub" id="ramSub">—</div>
-      <div class="bar-wrap"><div class="bar blue" id="ramBar"></div></div>
-    </div>
-
-    <!-- Temp -->
-    <div class="card" style="--accent-color: var(--warn)">
-      <div class="card-label">Температура</div>
-      <div class="card-value ok" id="tempVal"><div class="skeleton"></div></div>
-      <div class="card-sub">CPU</div>
-      <div class="bar-wrap"><div class="bar ok" id="tempBar"></div></div>
-    </div>
-  </div>
-
-  <div class="grid-2">
-    <!-- Disk -->
-    <div class="card" style="--accent-color: var(--warn)">
-      <div class="card-label">Диск</div>
-      <div class="card-value warn" id="diskVal"><div class="skeleton"></div></div>
-      <div class="card-sub" id="diskSub">—</div>
-      <div class="bar-wrap"><div class="bar warn" id="diskBar"></div></div>
-    </div>
-
-    <!-- Uptime -->
-    <div class="card uptime-card">
-      <div>
-        <div class="card-label">Аптайм</div>
-        <div class="uptime-grid" id="uptimeGrid">
-          <div class="uptime-item">
-            <div class="uptime-num" id="uptDays">—</div>
-            <div class="uptime-lbl">дней</div>
-          </div>
-          <div class="uptime-item">
-            <div class="uptime-num" id="uptHours">—</div>
-            <div class="uptime-lbl">часов</div>
-          </div>
-          <div class="uptime-item">
-            <div class="uptime-num" id="uptMins">—</div>
-            <div class="uptime-lbl">минут</div>
-          </div>
+    <div class="topbar">
+        <div class="logo">
+            <h1>NodePulse</h1>
+            <span>Live server monitoring</span>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="footer">
-    <div>
-      <div class="footer-text">Последнее обновление: <span id="lastUpdate">—</span></div>
-      <div class="footer-text" style="margin-top:4px">Следующее обновление: <span class="countdown"><span id="countdown">120</span> сек</span></div>
+        <div class="status">
+            <div class="status-dot"></div>
+            Сервер онлайн
+        </div>
     </div>
-    <button class="refresh-btn" onclick="fetchStats()">↻ обновить</button>
-  </div>
+
+    <div class="grid">
+
+        <div class="card">
+            <div class="label">Процессор</div>
+            <div id="cpu" class="value green">0%</div>
+
+            <div class="bar">
+                <div id="cpuBar" class="fill green-bg" style="width:0%"></div>
+            </div>
+
+            <div class="sub">нагрузка CPU</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Оперативная память</div>
+            <div id="ram" class="value blue">0%</div>
+
+            <div class="bar">
+                <div id="ramBar" class="fill blue-bg" style="width:0%"></div>
+            </div>
+
+            <div id="ramText" class="sub">0 / 0 MB</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Температура</div>
+            <div id="temp" class="value orange">0°C</div>
+
+            <div class="bar">
+                <div id="tempBar" class="fill orange-bg" style="width:0%"></div>
+            </div>
+
+            <div class="sub">температура CPU</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Диск</div>
+            <div id="disk" class="value red">0%</div>
+
+            <div class="bar">
+                <div id="diskBar" class="fill red-bg" style="width:0%"></div>
+            </div>
+
+            <div id="diskText" class="sub">свободно: 0 GB</div>
+        </div>
+
+    </div>
+
+    <div class="bottom">
+
+        <div class="card">
+            <div class="mini-title">Аптайм</div>
+            <div id="uptime" class="mini-value">—</div>
+        </div>
+
+        <div class="card">
+            <div class="mini-title">Последнее обновление</div>
+            <div id="updated" class="mini-value">—</div>
+        </div>
+
+        <div class="card">
+            <div class="mini-title">Следующее обновление</div>
+            <div id="nextUpdate" class="mini-value">120 сек</div>
+        </div>
+
+    </div>
+
+    <footer>
+        stats.json обновляется через GitHub API
+    </footer>
+
 </div>
 
 <script>
-  const REPO = 'AlwaysWaffle/arm-monitor';
-  const FILE = 'stats.json';
-  const URL = `https://raw.githubusercontent.com/${REPO}/main/${FILE}?t=${Date.now()}`;
-  const INTERVAL = 120;
+    const UPDATE_INTERVAL = 120;
 
-  let countdown = INTERVAL;
-  let timer;
+    let countdown = UPDATE_INTERVAL;
 
-  function colorClass(val, warn, danger) {
-    if (val >= danger) return 'danger';
-    if (val >= warn) return 'warn';
-    return 'ok';
-  }
+    async function loadStats() {
+        try {
 
-  function setMetric(valId, barId, value, unit, warn, danger) {
-    const el = document.getElementById(valId);
-    const bar = document.getElementById(barId);
-    const cls = colorClass(value, warn, danger);
-    el.textContent = value + unit;
-    el.className = 'card-value ' + cls;
-    bar.style.width = Math.min(value, 100) + '%';
-    bar.className = 'bar ' + cls;
-  }
+            // cache-busting чтобы GitHub Pages не кэшировал json
+            const response = await fetch(`stats.json?t=${Date.now()}`);
 
-  function parseUptime(seconds) {
-    const d = Math.floor(seconds / 86400);
-    const h = Math.floor((seconds % 86400) / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    return { d, h, m };
-  }
+            const data = await response.json();
 
-  async function fetchStats() {
-    try {
-      const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${FILE}?t=${Date.now()}`);
-      if (!res.ok) throw new Error('no data');
-      const data = await res.json();
+            updateUI(data);
 
-      // CPU
-      setMetric('cpuVal', 'cpuBar', data.cpu, '%', 70, 90);
+            countdown = UPDATE_INTERVAL;
 
-      // RAM
-      const ramPct = Math.round((data.ram_used / data.ram_total) * 100);
-      setMetric('ramVal', 'ramBar', ramPct, '%', 70, 90);
-      document.getElementById('ramSub').textContent =
-        Math.round(data.ram_used) + ' / ' + Math.round(data.ram_total) + ' МБ';
-
-      // Temp
-      const t = data.temp;
-      setMetric('tempVal', 'tempBar', t, '°C', 65, 80);
-      const tempBar = document.getElementById('tempBar');
-      const tempEl = document.getElementById('tempVal');
-      const tempCls = colorClass(t, 65, 80);
-      tempEl.className = 'card-value ' + tempCls;
-      tempBar.style.width = Math.min((t / 100) * 100, 100) + '%';
-
-      // Disk
-      setMetric('diskVal', 'diskBar', data.disk_pct, '%', 70, 90);
-      document.getElementById('diskSub').textContent =
-        'свободно: ' + data.disk_free;
-
-      // Uptime
-      const up = parseUptime(data.uptime_sec);
-      document.getElementById('uptDays').textContent = up.d;
-      document.getElementById('uptHours').textContent = up.h;
-      document.getElementById('uptMins').textContent = up.m;
-
-      // Status
-      document.getElementById('statusDot').className = 'dot';
-      document.getElementById('statusText').textContent = 'онлайн';
-
-      // Last update
-      const d = new Date(data.timestamp * 1000);
-      document.getElementById('lastUpdate').textContent =
-        d.toLocaleDateString('ru') + ' ' + d.toLocaleTimeString('ru');
-
-    } catch(e) {
-      document.getElementById('statusDot').className = 'dot offline';
-      document.getElementById('statusText').textContent = 'нет данных';
+        } catch (err) {
+            console.error("Ошибка загрузки stats.json", err);
+        }
     }
 
-    // Reset countdown
-    countdown = INTERVAL;
-  }
+    function updateUI(data) {
 
-  function startCountdown() {
-    clearInterval(timer);
-    timer = setInterval(() => {
-      countdown--;
-      document.getElementById('countdown').textContent = countdown;
-      if (countdown <= 0) {
-        fetchStats();
-      }
+        // CPU
+        setValue("cpu", `${data.cpu}%`);
+        setWidth("cpuBar", data.cpu);
+
+        // RAM
+        setValue("ram", `${data.ram_percent}%`);
+        setWidth("ramBar", data.ram_percent);
+        setValue(
+            "ramText",
+            `${data.ram_used} / ${data.ram_total} MB`
+        );
+
+        // TEMP
+        setValue("temp", `${data.temperature}°C`);
+        setWidth("tempBar", Math.min(data.temperature, 100));
+
+        // DISK
+        setValue("disk", `${data.disk_percent}%`);
+        setWidth("diskBar", data.disk_percent);
+        setValue(
+            "diskText",
+            `свободно: ${data.disk_free} GB`
+        );
+
+        // INFO
+        setValue("uptime", data.uptime);
+        setValue("updated", data.last_update);
+    }
+
+    function setValue(id, value) {
+        document.getElementById(id).textContent = value;
+    }
+
+    function setWidth(id, value) {
+        document.getElementById(id).style.width = value + "%";
+    }
+
+    // countdown
+    setInterval(() => {
+
+        countdown--;
+
+        if (countdown <= 0) {
+            countdown = UPDATE_INTERVAL;
+        }
+
+        document.getElementById("nextUpdate").textContent =
+            `${countdown} сек`;
+
     }, 1000);
-  }
 
-  fetchStats();
-  startCountdown();
+    // first load
+    loadStats();
+
+    // auto reload
+    setInterval(loadStats, UPDATE_INTERVAL * 1000);
 </script>
+
 </body>
 </html>
