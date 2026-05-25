@@ -1,10 +1,10 @@
 {
-  "cpu": 4,
+  "cpu": 5,
   "ram_used": 288,
   "ram_total": 1788,
-  "temp": 38.0,
+  "temp": 39.0,
   "disk_pct": 19,
   "disk_free": "12G",
-  "uptime_sec": 98854,
-  "timestamp": 1779725671
+  "uptime_sec": 98978,
+  "timestamp": 1779725794
 }
