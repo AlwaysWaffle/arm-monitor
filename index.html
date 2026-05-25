@@ -1,348 +1,454 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>monitor</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ARM Monitor</title>
+
 <style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --bg: #0d0d0d;
-  --line: rgba(255,255,255,0.07);
-  --muted: rgba(255,255,255,0.25);
-  --text: rgba(255,255,255,0.9);
-  --accent: #5affa0;
-  --accent-rgb: 90, 255, 160;
+:root{
+    --bg:#0b1020;
+    --panel:#121a2f;
+    --panel2:#18223d;
+    --text:#edf2ff;
+    --muted:#8ea2c9;
+    --accent:#6ea8ff;
+    --green:#2ecc71;
+    --yellow:#f1c40f;
+    --red:#ff5c7a;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:22px;
 }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', sans-serif;
-  min-height: 100vh;
-  padding: 48px 24px 80px;
-  transition: --accent 1s;
+*{
+    box-sizing:border-box;
 }
 
-.page { max-width: 720px; margin: 0 auto; }
-
-/* Header */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 64px;
+body{
+    margin:0;
+    font-family:Inter,system-ui,sans-serif;
+    background:
+        radial-gradient(circle at top left,#1c2952 0%,transparent 35%),
+        radial-gradient(circle at bottom right,#10203d 0%,transparent 35%),
+        var(--bg);
+    color:var(--text);
+    min-height:100vh;
 }
 
-.wordmark {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 400;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--muted);
+.container{
+    max-width:1200px;
+    margin:auto;
+    padding:32px 18px 40px;
 }
 
-.status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--muted);
-  letter-spacing: 0.1em;
+.topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:28px;
 }
 
-.dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  transition: background 1s;
-}
-.dot.dead { background: #444; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.dot:not(.dead) { animation: pulse 2s infinite; }
-
-/* Main metric */
-.hero {
-  margin-bottom: 56px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 40px;
+.title-wrap h1{
+    margin:0;
+    font-size:clamp(28px,4vw,42px);
+    font-weight:800;
+    letter-spacing:-1px;
 }
 
-.hero-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 16px;
+.title-wrap p{
+    margin:8px 0 0;
+    color:var(--muted);
 }
 
-.hero-value {
-  font-size: clamp(5rem, 18vw, 9rem);
-  font-weight: 300;
-  letter-spacing: -0.04em;
-  line-height: 0.85;
-  color: var(--accent);
-  transition: color 1s;
-  font-variant-numeric: tabular-nums;
+.actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
 }
 
-.hero-unit {
-  font-size: 0.3em;
-  font-weight: 400;
-  opacity: 0.5;
-  vertical-align: super;
+.status{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.06);
+    padding:12px 16px;
+    border-radius:999px;
+    backdrop-filter:blur(10px);
 }
 
-.hero-sub {
-  margin-top: 16px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--muted);
+.dot{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 14px var(--green);
 }
 
-/* Rows */
-.rows { display: flex; flex-direction: column; }
-
-.row {
-  display: grid;
-  grid-template-columns: 140px 1fr auto;
-  align-items: center;
-  gap: 24px;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--line);
+.dot.offline{
+    background:var(--red);
+    box-shadow:0 0 14px var(--red);
 }
 
-.row-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
+.refresh-btn{
+    border:none;
+    cursor:pointer;
+    border-radius:999px;
+    padding:12px 18px;
+    background:linear-gradient(135deg,#6ea8ff,#7d7bff);
+    color:white;
+    font-weight:700;
+    transition:.2s transform,.2s opacity;
 }
 
-.bar-track {
-  height: 1px;
-  background: var(--line);
-  position: relative;
+.refresh-btn:hover{
+    transform:translateY(-2px);
 }
 
-.bar-fill {
-  position: absolute;
-  top: 0; left: 0;
-  height: 100%;
-  background: var(--accent);
-  transition: width 1.2s cubic-bezier(.4,0,.2,1), background 1s;
-  width: 0;
+.refresh-btn:active{
+    transform:translateY(1px);
 }
 
-.row-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text);
-  white-space: nowrap;
-  min-width: 60px;
-  text-align: right;
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:18px;
 }
 
-/* Uptime */
-.uptime-row {
-  padding: 24px 0 0;
-  display: flex;
-  gap: 40px;
+.card{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border-radius:var(--radius);
+    padding:22px;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
 }
 
-.up-item {}
-.up-num {
-  font-size: 2rem;
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  color: var(--accent);
-  transition: color 1s;
-  font-variant-numeric: tabular-nums;
-}
-.up-lbl {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 4px;
+.card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(120deg,rgba(255,255,255,.06),transparent 50%);
+    pointer-events:none;
 }
 
-/* Footer */
-footer {
-  margin-top: 48px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+.label{
+    color:var(--muted);
+    font-size:14px;
+    margin-bottom:16px;
 }
 
-.foot-txt {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  color: var(--muted);
-  line-height: 1.8;
-  letter-spacing: 0.05em;
+.value{
+    font-size:42px;
+    font-weight:800;
+    line-height:1;
+    letter-spacing:-1px;
 }
 
-.foot-txt b { color: rgba(255,255,255,0.5); font-weight: 400; }
-
-.btn {
-  background: none;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  padding: 10px 18px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+.sub{
+    margin-top:10px;
+    color:var(--muted);
+    font-size:14px;
 }
-.btn:hover { border-color: var(--accent); color: var(--accent); }
 
-@media(max-width: 480px) {
-  .row { grid-template-columns: 90px 1fr auto; gap: 12px; }
-  .hero-value { font-size: 5rem; }
+.progress{
+    width:100%;
+    height:10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    margin-top:18px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    border-radius:999px;
+    transition:width .4s ease;
+}
+
+.cpu-bar{ background:linear-gradient(90deg,#4facfe,#00f2fe);}
+.ram-bar{ background:linear-gradient(90deg,#43e97b,#38f9d7);}
+.disk-bar{ background:linear-gradient(90deg,#fa709a,#fee140);}
+.temp-bar{ background:linear-gradient(90deg,#ff9966,#ff5e62);}
+
+.footer{
+    margin-top:28px;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    color:var(--muted);
+    font-size:14px;
+}
+
+.big-card{
+    margin-top:18px;
+    padding:28px;
+}
+
+.clock{
+    font-size:clamp(42px,7vw,82px);
+    font-weight:900;
+    letter-spacing:-3px;
+    margin-top:10px;
+}
+
+.countdown{
+    margin-top:14px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    padding:12px 16px;
+    border-radius:999px;
+}
+
+.pulse{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--accent);
+    animation:pulse 1.5s infinite;
+}
+
+@keyframes pulse{
+    0%{transform:scale(1);opacity:1}
+    50%{transform:scale(1.6);opacity:.4}
+    100%{transform:scale(1);opacity:1}
+}
+
+@media (max-width:700px){
+    .value{
+        font-size:34px;
+    }
+
+    .card{
+        padding:18px;
+    }
+
+    .big-card{
+        padding:22px;
+    }
 }
 </style>
 </head>
 <body>
-<div class="page">
 
-  <header class="header">
-    <div class="wordmark">arm · monitor</div>
-    <div class="status">
-      <div class="dot dead" id="dot"></div>
-      <span id="statusTxt">—</span>
-    </div>
-  </header>
+<div class="container">
 
-  <!-- Hero: CPU -->
-  <div class="hero">
-    <div class="hero-label">cpu load</div>
-    <div class="hero-value" id="heroVal">—<span class="hero-unit">%</span></div>
-    <div class="hero-sub" id="heroSub">ожидание данных...</div>
-  </div>
+    <div class="topbar">
+        <div class="title-wrap">
+            <h1>ARM Server Monitor</h1>
+            <p>Live telemetry dashboard</p>
+        </div>
 
-  <!-- Rows -->
-  <div class="rows">
-    <div class="row">
-      <div class="row-label">память</div>
-      <div class="bar-track"><div class="bar-fill" id="ramBar"></div></div>
-      <div class="row-val" id="ramVal">—</div>
-    </div>
-    <div class="row">
-      <div class="row-label">диск</div>
-      <div class="bar-track"><div class="bar-fill" id="diskBar"></div></div>
-      <div class="row-val" id="diskVal">—</div>
-    </div>
-    <div class="row">
-      <div class="row-label">температура</div>
-      <div class="bar-track"><div class="bar-fill" id="tempBar"></div></div>
-      <div class="row-val" id="tempVal">—</div>
+        <div class="actions">
+            <div class="status">
+                <div class="dot" id="statusDot"></div>
+                <span id="statusText">Online</span>
+            </div>
+
+            <button class="refresh-btn" id="refreshBtn">
+                Refresh Now
+            </button>
+        </div>
     </div>
 
-    <div class="uptime-row">
-      <div class="up-item">
-        <div class="up-num" id="upD">—</div>
-        <div class="up-lbl">дней</div>
-      </div>
-      <div class="up-item">
-        <div class="up-num" id="upH">—</div>
-        <div class="up-lbl">часов</div>
-      </div>
-      <div class="up-item">
-        <div class="up-num" id="upM">—</div>
-        <div class="up-lbl">минут</div>
-      </div>
-    </div>
-  </div>
+    <div class="grid">
 
-  <footer>
-    <div class="foot-txt">
-      <div>обновлено <b id="lastUpd">—</b></div>
-      <div>следующее через <b id="cd">120</b> с</div>
+        <div class="card">
+            <div class="label">CPU Load</div>
+            <div class="value" id="cpuValue">--%</div>
+
+            <div class="progress">
+                <div class="progress-bar cpu-bar" id="cpuBar"></div>
+            </div>
+
+            <div class="sub">Processor utilization</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Memory Usage</div>
+            <div class="value" id="ramValue">-- MB</div>
+
+            <div class="progress">
+                <div class="progress-bar ram-bar" id="ramBar"></div>
+            </div>
+
+            <div class="sub" id="ramSub">-- / -- MB</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Temperature</div>
+            <div class="value" id="tempValue">--°C</div>
+
+            <div class="progress">
+                <div class="progress-bar temp-bar" id="tempBar"></div>
+            </div>
+
+            <div class="sub">Thermal status</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Disk Usage</div>
+            <div class="value" id="diskValue">--%</div>
+
+            <div class="progress">
+                <div class="progress-bar disk-bar" id="diskBar"></div>
+            </div>
+
+            <div class="sub" id="diskSub">Free: --</div>
+        </div>
+
     </div>
-    <button class="btn" onclick="load()">↻ refresh</button>
-  </footer>
+
+    <div class="card big-card">
+        <div class="label">System Uptime</div>
+        <div class="clock" id="uptimeValue">--</div>
+
+        <div class="countdown">
+            <div class="pulse"></div>
+            <span id="countdownText">Next refresh in 120s</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div id="lastUpdate">
+            Last update: --
+        </div>
+
+        <div id="serverTime">
+            Server timestamp: --
+        </div>
+    </div>
 
 </div>
+
 <script>
-const REPO = 'AlwaysWaffle/arm-monitor';
-let cd = 120;
+const URL = "https://raw.githubusercontent.com/AlwaysWaffle/arm-monitor/main/stats.json";
 
-function getAccent(cpu, temp) {
-  const stress = Math.max(cpu, temp / 100 * 100);
-  if (stress >= 85) return '#ff5252';
-  if (stress >= 65) return '#ffb74d';
-  return '#5affa0';
+const cpuValue = document.getElementById("cpuValue");
+const ramValue = document.getElementById("ramValue");
+const tempValue = document.getElementById("tempValue");
+const diskValue = document.getElementById("diskValue");
+
+const ramSub = document.getElementById("ramSub");
+const diskSub = document.getElementById("diskSub");
+
+const cpuBar = document.getElementById("cpuBar");
+const ramBar = document.getElementById("ramBar");
+const tempBar = document.getElementById("tempBar");
+const diskBar = document.getElementById("diskBar");
+
+const uptimeValue = document.getElementById("uptimeValue");
+const lastUpdate = document.getElementById("lastUpdate");
+const serverTime = document.getElementById("serverTime");
+
+const statusDot = document.getElementById("statusDot");
+const statusText = document.getElementById("statusText");
+
+const countdownText = document.getElementById("countdownText");
+const refreshBtn = document.getElementById("refreshBtn");
+
+let countdown = 120;
+
+function formatUptime(sec){
+    const days = Math.floor(sec / 86400);
+    const hours = Math.floor((sec % 86400) / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+
+    const parts = [];
+
+    if(days) parts.push(days + "d");
+    if(hours) parts.push(hours + "h");
+    parts.push(mins + "m");
+
+    return parts.join(" ");
 }
 
-function setAccent(color) {
-  document.documentElement.style.setProperty('--accent', color);
+function setOnline(isOnline){
+    statusDot.classList.toggle("offline", !isOnline);
+    statusText.textContent = isOnline ? "Online" : "Offline";
 }
 
-function setBar(id, pct) {
-  document.getElementById(id).style.width = Math.min(pct, 100) + '%';
+async function loadStats(){
+    try{
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = "Loading...";
+
+        const response = await fetch(URL + "?t=" + Date.now());
+
+        if(!response.ok){
+            throw new Error("HTTP " + response.status);
+        }
+
+        const data = await response.json();
+
+        cpuValue.textContent = data.cpu + "%";
+        cpuBar.style.width = data.cpu + "%";
+
+        const ramPct = (data.ram_used / data.ram_total) * 100;
+
+        ramValue.textContent = data.ram_used + " MB";
+        ramSub.textContent = `${data.ram_used} / ${data.ram_total} MB`;
+        ramBar.style.width = ramPct + "%";
+
+        tempValue.textContent = data.temp + "°C";
+        tempBar.style.width = Math.min(data.temp,100) + "%";
+
+        diskValue.textContent = data.disk_pct + "%";
+        diskSub.textContent = "Free: " + data.disk_free;
+        diskBar.style.width = data.disk_pct + "%";
+
+        uptimeValue.textContent = formatUptime(data.uptime_sec);
+
+        const now = new Date();
+
+        lastUpdate.textContent =
+            "Last update: " + now.toLocaleString();
+
+        serverTime.textContent =
+            "Server timestamp: " +
+            new Date(data.timestamp * 1000).toLocaleString();
+
+        setOnline(true);
+
+        countdown = 120;
+    }
+    catch(err){
+        console.error(err);
+
+        setOnline(false);
+
+        lastUpdate.textContent =
+            "Last update failed: " + new Date().toLocaleTimeString();
+    }
+    finally{
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "Refresh Now";
+    }
 }
 
-async function load() {
-  try {
-    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/stats.json?t=${Date.now()}`);
-    if (!r.ok) throw 0;
-    const d = await r.json();
-
-    const ramPct = Math.round(d.ram_used / d.ram_total * 100);
-    const accent = getAccent(d.cpu, d.temp);
-    setAccent(accent);
-
-    document.getElementById('heroVal').innerHTML = d.cpu + '<span class="hero-unit">%</span>';
-    document.getElementById('heroSub').textContent =
-      'ram ' + ramPct + '% · temp ' + d.temp + '°C · disk ' + d.disk_pct + '%';
-
-    setBar('ramBar', ramPct);
-    setBar('diskBar', d.disk_pct);
-    setBar('tempBar', d.temp);
-
-    document.getElementById('ramVal').textContent = ramPct + '%';
-    document.getElementById('diskVal').textContent = d.disk_pct + '% · ' + d.disk_free + ' free';
-    document.getElementById('tempVal').textContent = d.temp + '°C';
-
-    const s = d.uptime_sec;
-    document.getElementById('upD').textContent = Math.floor(s / 86400);
-    document.getElementById('upH').textContent = Math.floor(s % 86400 / 3600);
-    document.getElementById('upM').textContent = Math.floor(s % 3600 / 60);
-
-    const dt = new Date(d.timestamp * 1000);
-    document.getElementById('lastUpd').textContent = dt.toLocaleTimeString('ru');
-
-    document.getElementById('dot').className = 'dot';
-    document.getElementById('statusTxt').textContent = 'online';
-
-  } catch(e) {
-    document.getElementById('dot').className = 'dot dead';
-    document.getElementById('statusTxt').textContent = 'offline';
-  }
-  cd = 120;
-}
+refreshBtn.addEventListener("click", loadStats);
 
 setInterval(() => {
-  cd--;
-  document.getElementById('cd').textContent = cd;
-  if (cd <= 0) load();
+    countdown--;
+
+    if(countdown <= 0){
+        loadStats();
+    }
+
+    countdownText.textContent =
+        `Next refresh in ${countdown}s`;
 }, 1000);
 
-load();
+loadStats();
 </script>
+
 </body>
 </html>
