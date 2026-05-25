@@ -1,652 +1,350 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>ARMOR VISOR · Server Sentinel</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'BlinkMacSystemFont', 'Roboto', monospace;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мониторинг | arm-monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            min-height: 100vh;
-            background: radial-gradient(circle at 20% 30%, #0a0f1e, #03060c);
-            padding: 2rem 1.5rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+:root {
+  --bg: #0f1117;
+  --card: #1a1d27;
+  --border: #2a2d3a;
+  --text: #e2e4ed;
+  --muted: #6b7090;
+  --accent: #22c55e;
+  --tg: #0088cc;
+}
 
-        /* GLASS PANEL */
-        .dashboard {
-            max-width: 1400px;
-            width: 100%;
-            background: rgba(12, 20, 30, 0.55);
-            backdrop-filter: blur(14px);
-            border-radius: 3rem;
-            border: 1px solid rgba(72, 187, 255, 0.25);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 255, 255, 0.05) inset;
-            padding: 2rem 2rem 2.2rem;
-            transition: all 0.2s ease;
-        }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 24px 16px 48px;
+  transition: color 0.3s;
+}
 
-        /* header + status row */
-        .header-flex {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 1rem;
-            margin-bottom: 2.5rem;
-            border-bottom: 1px dashed rgba(64, 224, 255, 0.4);
-            padding-bottom: 1rem;
-        }
+header {
+  max-width: 700px;
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 
-        .title-section h1 {
-            font-size: 1.9rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #eef4ff, #7bc5ff);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            letter-spacing: -0.3px;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-        }
+h1 { font-size: 20px; font-weight: 600; }
+h1 span { color: var(--muted); font-weight: 400; font-size: 15px; margin-left: 8px; }
 
-        .title-section h1::before {
-            content: "🛡️";
-            font-size: 1.8rem;
-            background: none;
-            -webkit-background-clip: unset;
-            color: #3cc7ff;
-        }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
-        .sub {
-            color: #8a9bb5;
-            font-size: 0.8rem;
-            margin-top: 6px;
-            letter-spacing: 0.3px;
-        }
+#status-pill, #tg-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 16px;
+  transition: all .2s ease;
+  text-decoration: none;
+  color: var(--text);
+}
 
-        .status-panel {
-            display: flex;
-            gap: 1.8rem;
-            background: rgba(0, 10, 20, 0.6);
-            backdrop-filter: blur(4px);
-            padding: 0.5rem 1.5rem;
-            border-radius: 60px;
-            align-items: center;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-        }
+#tg-link:hover {
+  border-color: var(--tg);
+  background: rgba(0,136,204,0.1);
+  transform: translateY(-1px);
+}
 
-        .online-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-        }
+#tg-link svg { color: var(--tg); flex-shrink: 0; }
 
-        .led {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: #2ecc71;
-            box-shadow: 0 0 6px #2ecc71;
-            transition: all 0.2s;
-        }
+#status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background .6s, box-shadow .6s;
+  flex-shrink: 0;
+}
+#status-dot.online {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(34,197,94,.15);
+  animation: pulse 2s ease-in-out infinite;
+}
+#status-dot.offline {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,.15);
+  animation: none;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-        .led.offline {
-            background-color: #e74c3c;
-            box-shadow: 0 0 6px #e74c3c;
-        }
+/* Grid */
+.grid {
+  max-width: 700px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
 
-        .status-text {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #c9e9ff;
-        }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  transition: border-color .2s, transform .2s;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover { border-color: #3a3f55; transform: translateY(-1px); }
 
-        .last-update {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            background: #0b1422;
-            padding: 0.3rem 0.9rem;
-            border-radius: 28px;
-            color: #b9e2ff;
-        }
+/* Top accent line per card */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20px;
+  width: 32px; height: 2px;
+  border-radius: 0 0 3px 3px;
+  background: var(--accent);
+  transition: background .6s;
+}
 
-        /* metric cards grid */
-        .grid-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1.6rem;
-            margin: 2rem 0 2rem;
-        }
+.card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
 
-        .card {
-            background: rgba(8, 16, 28, 0.7);
-            backdrop-filter: blur(4px);
-            border-radius: 2rem;
-            padding: 1.3rem 1.3rem 1.5rem;
-            border: 1px solid rgba(80, 180, 255, 0.2);
-            transition: transform 0.2s ease, border-color 0.2s;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
-        }
+.card-value {
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 12px;
+  color: var(--accent);
+  transition: color .6s;
+  font-variant-numeric: tabular-nums;
+}
 
-        .card:hover {
-            border-color: rgba(0, 200, 255, 0.6);
-            transform: translateY(-3px);
-            background: rgba(12, 24, 40, 0.75);
-        }
+.bar-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  width: 0%;
+  background: var(--accent);
+  transition: width 1s ease, background .6s;
+}
 
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 1rem;
-            border-left: 3px solid #1fa2ff;
-            padding-left: 12px;
-        }
+.card-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+}
 
-        .card-header h3 {
-            font-size: 1rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #bfd9ff;
-        }
+/* Wide card (uptime row) */
+.card.wide {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 20px 0;
+}
+.wide-item { flex: 1; min-width: 130px; padding: 0 20px; }
+.wide-divider { width: 1px; height: 40px; background: var(--border); flex-shrink: 0; }
+.wide-val {
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
 
-        .metric-value {
-            font-size: 2.6rem;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-            background: linear-gradient(145deg, #f0f9ff, #b3dcff);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            line-height: 1.2;
-        }
+/* Skeleton */
+.skeleton { animation: shimmer 1.5s ease-in-out infinite; }
+@keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-        .metric-unit {
-            font-size: 1rem;
-            font-weight: 400;
-            color: #6c8db0;
-        }
+footer {
+  max-width: 700px;
+  margin: 20px auto 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.05em;
+}
 
-        .sub-meta {
-            font-size: 0.75rem;
-            color: #6e8bb0;
-            margin-top: 8px;
-            font-family: monospace;
-        }
-
-        .progress-bar-bg {
-            background: #101a28;
-            border-radius: 40px;
-            height: 10px;
-            width: 100%;
-            margin-top: 14px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #32c9ff, #0084ff);
-            border-radius: 40px;
-            transition: width 0.4s ease;
-        }
-
-        .ram-detail {
-            font-size: 0.85rem;
-            margin-top: 8px;
-            color: #9bb5df;
-        }
-
-        /* uptime & footer row */
-        .extra-stats {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 2rem;
-            padding: 0.8rem 1.5rem;
-            margin-top: 1.5rem;
-            gap: 20px;
-        }
-
-        .uptime-block {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-family: monospace;
-            font-size: 1rem;
-            background: #07111e80;
-            padding: 0.4rem 1rem;
-            border-radius: 3rem;
-        }
-
-        .refresh-controls {
-            display: flex;
-            align-items: center;
-            gap: 1.2rem;
-            flex-wrap: wrap;
-        }
-
-        .countdown {
-            background: #0f1a2b;
-            padding: 0.4rem 1rem;
-            border-radius: 36px;
-            font-family: monospace;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #7bc5ff;
-        }
-
-        button {
-            background: rgba(30, 144, 255, 0.2);
-            border: 1px solid #2f8eff;
-            color: #d4f1ff;
-            padding: 0.5rem 1.4rem;
-            border-radius: 2.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            backdrop-filter: blur(4px);
-            font-size: 0.8rem;
-        }
-
-        button:hover {
-            background: #2f8eff;
-            color: #0a0f1e;
-            border-color: white;
-            box-shadow: 0 0 10px #3d9eff;
-        }
-
-        .error-tag {
-            color: #ffb4a2;
-            background: #4a121280;
-            border-radius: 28px;
-            padding: 0.2rem 0.8rem;
-            font-size: 0.75rem;
-        }
-
-        @media (max-width: 680px) {
-            .dashboard {
-                padding: 1.2rem;
-            }
-            .metric-value {
-                font-size: 2rem;
-            }
-        }
-
-        .blink-warning {
-            animation: pulse 0.8s ease-in-out;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; background: rgba(255, 70, 70, 0.2);}
-            100% { opacity: 1; background: transparent;}
-        }
-    </style>
+@media(max-width: 480px) {
+  .card-value { font-size: 30px; }
+}
+</style>
 </head>
 <body>
-<div class="dashboard" id="dashboardRoot">
-    <div class="header-flex">
-        <div class="title-section">
-            <h1>ARMOR VISOR</h1>
-            <div class="sub">real‑time telemetry · bare metal sentinel</div>
-        </div>
-        <div class="status-panel" id="statusWidget">
-            <div class="online-badge">
-                <div class="led" id="statusLed"></div>
-                <span class="status-text" id="statusMsg">checking...</span>
-            </div>
-            <div class="last-update" id="lastUpdateText">—</div>
-        </div>
-    </div>
 
-    <!-- metrics grid -->
-    <div class="grid-cards" id="metricGrid">
-        <!-- CPU card -->
-        <div class="card">
-            <div class="card-header"><h3>⚙️ CPU LOAD</h3></div>
-            <div class="metric-value"><span id="cpuVal">0</span><span class="metric-unit"> %</span></div>
-            <div class="progress-bar-bg"><div class="progress-fill" id="cpuFill"></div></div>
-            <div class="sub-meta">active cores pressure</div>
-        </div>
-        <!-- RAM card -->
-        <div class="card">
-            <div class="card-header"><h3>🧠 RAM USAGE</h3></div>
-            <div class="metric-value"><span id="ramUsedVal">0</span><span class="metric-unit"> MB</span></div>
-            <div class="progress-bar-bg"><div class="progress-fill" id="ramFill"></div></div>
-            <div class="ram-detail" id="ramDetail">of <span id="ramTotalVal">0</span> MB total</div>
-        </div>
-        <!-- Temperature card -->
-        <div class="card">
-            <div class="card-header"><h3>🌡️ THERMAL</h3></div>
-            <div class="metric-value"><span id="tempVal">0</span><span class="metric-unit"> °C</span></div>
-            <div class="progress-bar-bg"><div class="progress-fill" id="tempFill" style="background:#ff7940;"></div></div>
-            <div class="sub-meta" id="tempStatus">normal range</div>
-        </div>
-        <!-- Disk card -->
-        <div class="card">
-            <div class="card-header"><h3>💾 DISK UTIL</h3></div>
-            <div class="metric-value"><span id="diskPctVal">0</span><span class="metric-unit"> %</span></div>
-            <div class="progress-bar-bg"><div class="progress-fill" id="diskFill"></div></div>
-            <div class="sub-meta" id="diskFreeInfo">free: —</div>
-        </div>
+<header>
+  <h1>arm-monitor <span>мониторинг</span></h1>
+  <div class="header-actions">
+    <a href="https://t.me/" id="tg-link" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+      </svg>
+      Telegram
+    </a>
+    <div id="status-pill">
+      <div id="status-dot"></div>
+      <span id="status-text">загрузка...</span>
     </div>
+  </div>
+</header>
 
-    <!-- extra: uptime + controls -->
-    <div class="extra-stats">
-        <div class="uptime-block">
-            <span>⏱️ UPTIME</span>
-            <strong id="uptimeFormatted">0d 0h 0m</strong>
-        </div>
-        <div class="refresh-controls">
-            <div class="countdown">🔄 next update: <span id="countdownSec">120</span>s</div>
-            <button id="manualRefreshBtn">⟳ refresh now</button>
-        </div>
+<div class="grid">
+  <div class="card">
+    <div class="card-label">Процессор</div>
+    <div class="card-value skeleton" id="cpu-val">—</div>
+    <div class="bar-track"><div class="bar-fill" id="cpu-bar"></div></div>
+    <div class="card-sub">нагрузка</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Оперативная память</div>
+    <div class="card-value skeleton" id="ram-val">—</div>
+    <div class="bar-track"><div class="bar-fill" id="ram-bar"></div></div>
+    <div class="card-sub" id="ram-sub">—</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Температура</div>
+    <div class="card-value skeleton" id="temp-val">—</div>
+    <div class="bar-track"><div class="bar-fill" id="temp-bar"></div></div>
+    <div class="card-sub">CPU</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Диск</div>
+    <div class="card-value skeleton" id="disk-val">—</div>
+    <div class="bar-track"><div class="bar-fill" id="disk-bar"></div></div>
+    <div class="card-sub" id="disk-sub">—</div>
+  </div>
+
+  <div class="card wide">
+    <div class="wide-item">
+      <div class="card-label">Аптайм</div>
+      <div class="wide-val skeleton" id="uptime-val">—</div>
     </div>
-    <div style="text-align: right; margin-top: 1rem; font-size: 0.7rem; opacity: 0.5; color: #5d7a9a;">
-        live feed · arm monitor
+    <div class="wide-divider"></div>
+    <div class="wide-item">
+      <div class="card-label">Последнее обновление</div>
+      <div class="wide-val skeleton" id="checked-val">—</div>
     </div>
+    <div class="wide-divider"></div>
+    <div class="wide-item">
+      <div class="card-label">Следующее обновление</div>
+      <div class="wide-val" id="next-val">через 120 с</div>
+    </div>
+  </div>
 </div>
 
+<footer>Данные обновляются каждые 120 секунд · stats.json из GitHub</footer>
+
 <script>
-    (function() {
-        // -------- DOM elements ----------
-        const cpuValSpan = document.getElementById('cpuVal');
-        const cpuFill = document.getElementById('cpuFill');
-        const ramUsedSpan = document.getElementById('ramUsedVal');
-        const ramFill = document.getElementById('ramFill');
-        const ramTotalSpan = document.getElementById('ramTotalVal');
-        const ramDetailSpan = document.getElementById('ramDetail');
-        const tempValSpan = document.getElementById('tempVal');
-        const tempFill = document.getElementById('tempFill');
-        const tempStatusSpan = document.getElementById('tempStatus');
-        const diskPctSpan = document.getElementById('diskPctVal');
-        const diskFill = document.getElementById('diskFill');
-        const diskFreeSpan = document.getElementById('diskFreeInfo');
-        const uptimeFormattedSpan = document.getElementById('uptimeFormatted');
-        const lastUpdateSpan = document.getElementById('lastUpdateText');
-        const statusLed = document.getElementById('statusLed');
-        const statusMsgSpan = document.getElementById('statusMsg');
-        const countdownSpan = document.getElementById('countdownSec');
+const REPO = 'AlwaysWaffle/arm-monitor';
+const REFRESH = 120;
+let cd = REFRESH;
 
-        // state variables
-        let online = true;
-        let currentTimer = null;          // countdown interval
-        let autoRefreshInterval = null;    // main refresh trigger
-        let secondsLeft = 120;
-        let isFetching = false;            // prevent overlapping fetches
-        let lastFetchSuccess = false;
+// Dynamic accent: green → amber → red
+function accent(cpu, temp) {
+  const v = Math.max(cpu, (temp / 100) * 100);
+  if (v >= 85) return '#ef4444';
+  if (v >= 60) return '#f59e0b';
+  return '#22c55e';
+}
 
-        const API_BASE = 'https://raw.githubusercontent.com/AlwaysWaffle/arm-monitor/main/stats.json';
+function applyAccent(color) {
+  document.documentElement.style.setProperty('--accent', color);
+}
 
-        // helper: format uptime seconds => human readable
-        function formatUptime(seconds) {
-            if (typeof seconds !== 'number' || isNaN(seconds)) return '—';
-            const days = Math.floor(seconds / 86400);
-            const hours = Math.floor((seconds % 86400) / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-            if (hours > 0) return `${hours}h ${minutes}m`;
-            return `${minutes}m`;
-        }
+function setCard(valId, barId, pct, text) {
+  const el = document.getElementById(valId);
+  el.textContent = text;
+  el.classList.remove('skeleton');
+  document.getElementById(barId).style.width = Math.min(pct, 100) + '%';
+}
 
-        // temperature style / warning
-        function updateTempStyle(temp) {
-            if (temp >= 75) {
-                tempStatusSpan.innerText = '⚠️ critical heat';
-                tempStatusSpan.style.color = '#ff9f8f';
-                return '#e34d2e';
-            } else if (temp >= 60) {
-                tempStatusSpan.innerText = '🔥 high temp';
-                tempStatusSpan.style.color = '#ffbe76';
-                return '#ff9140';
-            } else if (temp >= 45) {
-                tempStatusSpan.innerText = '🌡️ warm';
-                tempStatusSpan.style.color = '#f0b27a';
-                return '#ffb347';
-            } else {
-                tempStatusSpan.innerText = '❄️ optimal';
-                tempStatusSpan.style.color = '#8bc9ff';
-                return '#3cc7ff';
-            }
-        }
+function fmtUptime(sec) {
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor(sec % 86400 / 3600);
+  const m = Math.floor(sec % 3600 / 60);
+  return (d > 0 ? d + 'д ' : '') + h + 'ч ' + m + 'мин';
+}
 
-        // update all UI fields from JSON object
-        function renderDashboard(data) {
-            if (!data || typeof data !== 'object') return;
+function fmtTime(ts) {
+  const d = new Date(ts * 1000);
+  const p = n => String(n).padStart(2, '0');
+  return p(d.getDate()) + '.' + p(d.getMonth()+1) + ' ' +
+         p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
 
-            // CPU
-            let cpu = typeof data.cpu === 'number' ? data.cpu : 0;
-            cpu = Math.min(100, Math.max(0, cpu));
-            cpuValSpan.innerText = Math.round(cpu);
-            cpuFill.style.width = `${cpu}%`;
+async function load() {
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/stats.json?t=${Date.now()}`);
+    if (!r.ok) throw 0;
+    const d = await r.json();
 
-            // RAM
-            let ramUsed = typeof data.ram_used === 'number' ? data.ram_used : 0;
-            let ramTotal = typeof data.ram_total === 'number' ? data.ram_total : 1;
-            let ramPercent = (ramUsed / ramTotal) * 100;
-            ramPercent = Math.min(100, Math.max(0, ramPercent));
-            ramUsedSpan.innerText = Math.round(ramUsed);
-            ramTotalSpan.innerText = Math.round(ramTotal);
-            ramFill.style.width = `${ramPercent}%`;
-            ramDetailSpan.innerHTML = `of ${Math.round(ramTotal)} MB total · ${Math.round(ramPercent)}% used`;
+    const ramPct = Math.round(d.ram_used / d.ram_total * 100);
+    const tempPct = Math.round((d.temp / 100) * 100);
+    const col = accent(d.cpu, d.temp);
+    applyAccent(col);
 
-            // TEMP
-            let temp = typeof data.temp === 'number' ? data.temp : 0;
-            tempValSpan.innerText = Math.round(temp);
-            let fillColor = updateTempStyle(temp);
-            tempFill.style.backgroundColor = fillColor;
-            let tempPercent = Math.min(100, (temp / 85) * 100);
-            tempFill.style.width = `${tempPercent}%`;
+    setCard('cpu-val',  'cpu-bar',  d.cpu,     d.cpu + '%');
+    setCard('ram-val',  'ram-bar',  ramPct,    ramPct + '%');
+    setCard('temp-val', 'temp-bar', tempPct,   d.temp + '°C');
+    setCard('disk-val', 'disk-bar', d.disk_pct, d.disk_pct + '%');
 
-            // DISK
-            let diskPct = typeof data.disk_pct === 'number' ? data.disk_pct : 0;
-            diskPct = Math.min(100, Math.max(0, diskPct));
-            diskPctSpan.innerText = Math.round(diskPct);
-            diskFill.style.width = `${diskPct}%`;
-            let diskFreeRaw = data.disk_free || '?';
-            diskFreeSpan.innerText = `free: ${diskFreeRaw}`;
+    document.getElementById('ram-sub').textContent  = Math.round(d.ram_used) + ' / ' + Math.round(d.ram_total) + ' МБ';
+    document.getElementById('disk-sub').textContent = 'свободно: ' + d.disk_free;
 
-            // UPTIME
-            let uptimeSec = typeof data.uptime_sec === 'number' ? data.uptime_sec : 0;
-            uptimeFormattedSpan.innerText = formatUptime(uptimeSec);
+    const up = document.getElementById('uptime-val');
+    up.textContent = fmtUptime(d.uptime_sec);
+    up.classList.remove('skeleton');
 
-            // last update timestamp (epoch or string)
-            let ts = data.timestamp;
-            let updateDate = null;
-            if (typeof ts === 'number' && ts > 0) {
-                updateDate = new Date(ts * 1000);
-            } else if (typeof ts === 'string' && !isNaN(Date.parse(ts))) {
-                updateDate = new Date(ts);
-            } else {
-                updateDate = new Date();
-            }
-            if (updateDate && !isNaN(updateDate.getTime())) {
-                lastUpdateSpan.innerText = updateDate.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit', second:'2-digit' });
-            } else {
-                lastUpdateSpan.innerText = new Date().toLocaleTimeString();
-            }
-        }
+    const ch = document.getElementById('checked-val');
+    ch.textContent = fmtTime(d.timestamp);
+    ch.classList.remove('skeleton');
 
-        // apply online/offline style & edge indicator
-        function setOnlineStatus(isOnline, errorMessage = null) {
-            online = isOnline;
-            if (isOnline) {
-                statusLed.className = 'led';
-                statusMsgSpan.innerText = 'ONLINE · linked';
-                statusLed.style.background = '#2ecc71';
-                statusLed.style.boxShadow = '0 0 8px #2ecc71';
-            } else {
-                statusLed.className = 'led offline';
-                statusMsgSpan.innerText = errorMessage ? `OFFLINE · ${errorMessage}` : 'OFFLINE · no signal';
-                statusLed.style.background = '#e74c3c';
-                statusLed.style.boxShadow = '0 0 6px #e74c3c';
-            }
-        }
+    document.getElementById('status-dot').className = 'online';
+    document.getElementById('status-text').textContent = 'Онлайн';
 
-        // short blink animation on cards when refresh occurs
-        function blinkDashboard() {
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                card.classList.add('blink-warning');
-                setTimeout(() => card.classList.remove('blink-warning'), 500);
-            });
-        }
+  } catch(e) {
+    document.getElementById('status-dot').className = 'offline';
+    document.getElementById('status-text').textContent = 'Офлайн';
+  }
+  cd = REFRESH;
+}
 
-        // core fetch logic with cache bust
-        async function fetchMetrics(manual = false) {
-            if (isFetching) return;
-            isFetching = true;
-            const url = `${API_BASE}?t=${Date.now()}`;
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-                const response = await fetch(url, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const jsonData = await response.json();
-                // minimal validation for mandatory fields
-                if (jsonData && typeof jsonData === 'object' && (jsonData.cpu !== undefined || jsonData.ram_used !== undefined)) {
-                    renderDashboard(jsonData);
-                    setOnlineStatus(true);
-                    lastFetchSuccess = true;
-                    if (!manual) blinkDashboard(); // subtle blink on auto-refresh too
-                    else {
-                        // manual gets stronger visual cue
-                        blinkDashboard();
-                        const btn = document.getElementById('manualRefreshBtn');
-                        if(btn) btn.style.transform = 'scale(0.97)';
-                        setTimeout(()=> { if(btn) btn.style.transform = ''; }, 150);
-                    }
-                } else {
-                    throw new Error('Invalid schema');
-                }
-            } catch (err) {
-                console.warn('fetch error:', err);
-                let errorMsg = err.name === 'AbortError' ? 'timeout' : 'connection fail';
-                setOnlineStatus(false, errorMsg);
-                // keep previous data, but show stale fallback time? we do nothing but status will reflect offline.
-                // if last fetch success then keep old values, else show dashes (but we keep default zeros)
-                if (!lastFetchSuccess) {
-                    // fill placeholder "no data"
-                    cpuValSpan.innerText = '?';
-                    ramUsedSpan.innerText = '?';
-                    tempValSpan.innerText = '?';
-                    diskPctSpan.innerText = '?';
-                    uptimeFormattedSpan.innerText = '—';
-                    lastUpdateSpan.innerText = 'failed';
-                } else {
-                    // just keep existing values with offline indicator
-                    // update timestamp note to show offline stale
-                    lastUpdateSpan.innerText = lastUpdateSpan.innerText + ' (stale)';
-                }
-            } finally {
-                isFetching = false;
-            }
-        }
+setInterval(() => {
+  cd--;
+  document.getElementById('next-val').textContent = 'через ' + cd + ' с';
+  if (cd <= 0) load();
+}, 1000);
 
-        // countdown updater
-        function startCountdown(initialSec = 120) {
-            if (currentTimer) clearInterval(currentTimer);
-            secondsLeft = initialSec;
-            if (countdownSpan) countdownSpan.innerText = secondsLeft;
-            currentTimer = setInterval(() => {
-                if (secondsLeft <= 1) {
-                    // when reaches zero, we reset countdown after new fetch (fetch will be called by main interval)
-                    // but countdown should reflect exactly next interval. autoRefresh trigger will reset countdown to 120.
-                    if (countdownSpan) countdownSpan.innerText = '0';
-                } else {
-                    secondsLeft--;
-                    if (countdownSpan) countdownSpan.innerText = secondsLeft;
-                }
-            }, 1000);
-        }
-
-        // reset countdown display to full 120 sec (sync)
-        function resetCountdownDisplay() {
-            secondsLeft = 120;
-            if (countdownSpan) countdownSpan.innerText = '120';
-        }
-
-        // main auto refresh schedule
-        function initAutoRefresh() {
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            // start fetch immediately, then interval
-            fetchMetrics(false).finally(() => {
-                resetCountdownDisplay();
-                startCountdown(120);
-            });
-            // set recurring fetch every 120 seconds
-            autoRefreshInterval = setInterval(() => {
-                fetchMetrics(false).finally(() => {
-                    resetCountdownDisplay();
-                    // restart countdown ticker (avoid duplicate timers)
-                    if (currentTimer) clearInterval(currentTimer);
-                    startCountdown(120);
-                });
-            }, 120000); // 120000 ms
-        }
-
-        // manual refresh: abort current countdown? we just fetch, reset interval timers to avoid overlapping
-        let manualTriggerInProgress = false;
-        function manualRefresh() {
-            if (manualTriggerInProgress) return;
-            manualTriggerInProgress = true;
-            // stop auto interval temporarily to avoid race, but we restart after fetch.
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-            }
-            if (currentTimer) clearInterval(currentTimer);
-            // fetch with priority
-            fetchMetrics(true).finally(() => {
-                // reset the countdown display & timer
-                resetCountdownDisplay();
-                startCountdown(120);
-                // restart the auto interval again
-                if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-                autoRefreshInterval = setInterval(() => {
-                    fetchMetrics(false).finally(() => {
-                        resetCountdownDisplay();
-                        if (currentTimer) clearInterval(currentTimer);
-                        startCountdown(120);
-                    });
-                }, 120000);
-                manualTriggerInProgress = false;
-            });
-        }
-
-        // attach manual button
-        const manualBtn = document.getElementById('manualRefreshBtn');
-        if (manualBtn) {
-            manualBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                manualRefresh();
-            });
-        }
-
-        // initial load and background status
-        initAutoRefresh();
-
-        // optional heartbeat for online status if connection is restored gracefully (no extra action needed)
-        // Additional safe: if page visibility hidden? not needed but professional
-        window.addEventListener('load', () => {
-            // prefill after fetch quick
-        });
-    })();
+load();
 </script>
 </body>
 </html>
